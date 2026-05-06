@@ -81,4 +81,4 @@ networks:
 volumes:
   inventory-db-data:
   billing-db-data:
-  api-gateway-logs:
+  api-gateway-logs: 

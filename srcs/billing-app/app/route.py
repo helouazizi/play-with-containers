@@ -1,24 +1,36 @@
+from flask import Blueprint, jsonify
 import json
 from .config import Config
 from .model import db,Order
 import pika
 
-def callback(ch, method, properties, body):
-        
-        data =json.loads(body)
-        # print(f" [x] Received {data['number_of_items']}")
-        order = Order(
-            user_id=data['user_id'],
-            number_of_items=data['number_of_items'],
-            total_amount=data['total_amount'],
-        )
-        
-        db.session.add(order)
-        db.session.commit()
-        
-        # ch.basic_ack(delivery_tag=method.delivery_tag)
+billing_bp = Blueprint('billing', __name__)
 
-def start_consoming(app):
+@billing_bp.route("/api/billing", methods=["GET"])
+def get_orders():
+    orders = Order.query.all()
+    return jsonify([{
+        # "id": o.id,
+        "user_id": o.user_id,
+        "number_of_items": o.number_of_items,
+        "total_amount": float(o.total_amount)
+    } for o in orders]), 200
+
+def callback(ch, method, properties, body):
+    data = json.loads(body)
+    # print(f" [x] Received {data['number_of_items']}")
+    order = Order(
+        user_id=data['user_id'],
+        number_of_items=data['number_of_items'],
+        total_amount=data['total_amount'],
+    )
+        
+    db.session.add(order)
+    db.session.commit()
+    
+    # ch.basic_ack(delivery_tag=method.delivery_tag)
+
+def start_consuming(app):
     credentials=pika.PlainCredentials(
         Config.RABBITMQ_USER,
         Config.RABBITMQ_PASS
@@ -26,7 +38,7 @@ def start_consoming(app):
     
     params=pika.ConnectionParameters(
         host=Config.RABBITMQ_HOST,
-        port=Config.RABBITMQ_PORT,
+        port=int(Config.RABBITMQ_PORT),
         virtual_host=Config.RABBITMQ_VHOST,
         credentials=credentials
         )

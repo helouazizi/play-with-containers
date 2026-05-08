@@ -32,6 +32,9 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    ports:
+      - "5672:5672"   # AMQP protocol (used by code)
+      - "15672:15672" # Management UI (used by you)
     networks:
       - backend-network
 

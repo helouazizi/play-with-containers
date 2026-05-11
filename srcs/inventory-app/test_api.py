@@ -8,9 +8,12 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 dotenv_path = os.path.join(basedir, '../../.env')
 load_dotenv(dotenv_path)
 
-# Get the INVENTORY_PORT from the .env file, default to 8080 if not set
-PORT = os.environ.get('INVENTORY_PORT', 8081)
-BASE_URL = f"http://localhost:{PORT}/api/movies"
+# Determine Gateway Host: Use 'api-gateway-app' for internal Docker network calls.
+# If testing from your host machine, set API_GATEWAY_HOST=localhost in your .env.
+GATEWAY_HOST = os.environ.get('API_GATEWAY_HOST', 'api-gateway-app')
+GATEWAY_PORT = os.environ.get('API_GATEWAY_PORT', 3000)
+
+BASE_URL = f"http://{GATEWAY_HOST}:{GATEWAY_PORT}/api/movies"
 
 def print_response(response, message=""):
     """Helper function to print API responses."""

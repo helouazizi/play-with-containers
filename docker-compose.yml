@@ -4,9 +4,9 @@ services:
     container_name: inventory-db
     restart: always
     environment:
-      - POSTGRES_DB=${INVENTORY_DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_INVENTORY}
+      - POSTGRES_USER=${POSTGRES_USER_INVENTORY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_INVENTORY}
     volumes:
       - inventory-db-data:/var/lib/postgresql/data
     networks:
@@ -17,9 +17,9 @@ services:
     container_name: billing-db
     restart: always
     environment:
-      - POSTGRES_DB=${BILLING_DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_BILLING}
+      - POSTGRES_USER=${POSTGRES_USER_BILLING}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_BILLING}
     volumes:
       - billing-db-data:/var/lib/postgresql/data
     networks:
@@ -29,12 +29,13 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbit-queue
     restart: always
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
     ports:
-      - "5672:5672"   # AMQP protocol (used by code)
-      - "15672:15672" # Management UI (used by you)
+      - "${RABBITMQ_PORT}:5672"
+      - "15672:15672" # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
     networks:
       - backend-network
 
@@ -71,7 +72,7 @@ services:
     env_file:
       - .env
     ports:
-      - "3000:3000"
+      - "${API_GATEWAY_PORT}:3000"
     volumes:
       - api-gateway-logs:/var/log/api-gateway
     networks:

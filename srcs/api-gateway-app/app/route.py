@@ -30,7 +30,7 @@ def proxy_request(url:str):
     
 def billing_service(path):
     if request.method == "GET":
-        target_url = f"http://{Config.BILLING_HOST}:{Config.BILLING_PORT}/{path}"
+        target_url = f"http://{Config.BILLING_APP_HOST}:{Config.BILLING_PORT}/{path}"
         return proxy_request(target_url)
 
     data=request.get_json()
@@ -42,8 +42,8 @@ def billing_service(path):
         if field not in data:
             return jsonify({"message":f"{field} is required."}), 400
     try:
-        credential=pika.PlainCredentials(Config.RABBITMQ_USER,Config.RABBITMQ_PASS)
-        params=pika.ConnectionParameters(host=Config.RABBITMQ_HOST,port=int(Config.RABBITMQ_PORT),credentials=credential,virtual_host=Config.RABBITMQ_VHOST)
+        credential=pika.PlainCredentials(Config.RABBITMQ_DEFAULT_USER,Config.RABBITMQ_DEFAULT_PASS)
+        params=pika.ConnectionParameters(host=Config.RABBITMQ_HOST,port=int(Config.RABBITMQ_PORT),credentials=credential,virtual_host=Config.RABBITMQ_DEFAULT_VHOST)
         connection=pika.BlockingConnection(params)
         channel = connection.channel()
         channel.queue_declare(queue=Config.RABBITMQ_QUEUE, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -56,10 +56,9 @@ def billing_service(path):
     
 @services_bp.route("/<path:path>",methods=["GET","POST","DELETE","PUT"])
 def server(path:str):
-    target_url = f"http://{Config.INVENTORY_HOST}:{Config.INVENTORY_PORT}/{path}"
-    print(f"DEBUG: Forwarding request to: {target_url}") # CHECK YOUR DOCKER LOGS FOR THIS
+    print(f"DEBUG: Forwarding request to: http://{Config.INVENTORY_APP_HOST}:{Config.INVENTORY_PORT}/{path}") # CHECK YOUR DOCKER LOGS FOR THIS
     if path.startswith("api/movies"):
-        return proxy_request(f"http://{Config.INVENTORY_HOST}:{Config.INVENTORY_PORT}/{path}")
+        return proxy_request(f"http://{Config.INVENTORY_APP_HOST}:{Config.INVENTORY_PORT}/{path}")
     elif path.startswith("api/billing"):
         return billing_service(path)
     else:

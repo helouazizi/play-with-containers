@@ -11,14 +11,21 @@ def create_app():
     app = Flask(__name__)
 
   
-    db_uri = os.getenv('INVENTORY_DATABASE_URL')
+    db_uri = os.getenv('INVENTORY_DATABASE_URL') # Still check for full URL first
 
     if not db_uri:
-        # Help yourself debug: if it's missing, show exactly where the app is looking
-        raise RuntimeError(
-            f"SQLALCHEMY_DATABASE_URI is not set. "
-            f"Current Working Dir: {os.getcwd()}"
-        )
+        # Construct URI from individual components defined in .env
+        user = os.getenv('POSTGRES_USER_INVENTORY')
+        password = os.getenv('POSTGRES_PASSWORD_INVENTORY')
+        host = os.getenv('INVENTORY_DB_HOST', 'inventory-db')
+        db_name = os.getenv('POSTGRES_DB_INVENTORY')
+        port = os.getenv('INVENTORY_DB_PORT', '5432')
+
+        if all([user, password, db_name]):
+            db_uri = f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
+
+    if not db_uri:
+        raise RuntimeError("Database configuration is missing. Set INVENTORY_DATABASE_URL or individual POSTGRES_... vars.")
 
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

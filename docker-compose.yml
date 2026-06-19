@@ -1,8 +1,8 @@
 services:
   inventory-db:
-    image: postgres:16-alpine
+    build: ./srcs/postgres-image
     container_name: inventory-db
-    restart: always
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=${POSTGRES_DB_INVENTORY}
       - POSTGRES_USER=${POSTGRES_USER_INVENTORY}
@@ -13,9 +13,9 @@ services:
       - backend-network
 
   billing-db:
-    image: postgres:16-alpine
+    build: ./srcs/postgres-image
     container_name: billing-db
-    restart: always
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=${POSTGRES_DB_BILLING}
       - POSTGRES_USER=${POSTGRES_USER_BILLING}
@@ -28,7 +28,7 @@ services:
   rabbit-queue:
     build: ./srcs/rabbit-queue
     container_name: rabbit-queue
-    restart: always
+    restart: unless-stopped
     ports:
       - "${RABBITMQ_PORT}:5672"
       - "15672:15672" # Management UI
@@ -43,9 +43,10 @@ services:
     build: ./srcs/inventory-app
     image: inventory-app
     container_name: inventory-app
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - inventory-db
+          inventory-db:
+            condition: service_started
     env_file:
       - .env
     networks:
@@ -55,7 +56,7 @@ services:
     build: ./srcs/billing-app
     image: billing-app
     container_name: billing-app
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
@@ -68,7 +69,7 @@ services:
     build: ./srcs/api-gateway-app
     image: api-gateway-app
     container_name: api-gateway-app
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     ports:

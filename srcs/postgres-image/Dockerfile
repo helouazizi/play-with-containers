@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM alpine:latest
 
 # Avoid prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive

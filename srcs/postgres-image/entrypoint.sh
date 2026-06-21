@@ -4,7 +4,7 @@ set -e
 # Define the target folder inside the mounted volume
 DB_DATA_DIR="/var/lib/postgresql/data/pgdata"
 # Define the absolute binary directory path for Ubuntu
-PG_BIN_DIR="/usr/lib/postgresql/14/bin"
+PG_BIN_DIR="/usr/bin"
 
 echo "Running startup environment checks as root..."
 

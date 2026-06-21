@@ -1,132 +1,188 @@
-# Play With Containers: Microservices Architecture
-
-A production-ready microservices orchestration project utilizing Docker and Docker Compose. This architecture demonstrates service isolation, asynchronous messaging with RabbitMQ, persistent storage with PostgreSQL, and a centralized API Gateway.
-
-## 🏗 Architecture Overview
-
-The project consists of six interconnected containers organized within a private Docker network. To ensure security, only the API Gateway is exposed to the host machine.
-
-*   **API Gateway (Port 3000):** The single entry point. Routes requests to internal services and handles RabbitMQ message publishing.
-*   **Inventory Service (Port 8080 - Internal):** Manages movie data.
-*   **Billing Service (Port 8080 - Internal):** Asynchronously processes billing tasks via RabbitMQ.
-*   **Database Cluster:** Two isolated PostgreSQL instances for Inventory and Billing data.
-*   **Message Broker:** RabbitMQ instance for inter-service communication.
-
-![Architecture Diagram](./resources/play-with-containers-py.png)
-
-## 📁 Project Structure
-
-```text
-.
-├── srcs/
-│   ├── api-gateway-app/   # Flask Gateway & Proxy logic
-│   ├── inventory-app/     # Inventory CRUD logic
-│   └── billing-app/       # Billing consumer & logic
-├── docker-compose.yml     # Orchestration manifest
-├── .env.example           # Template for environment secrets
-└── README.md              # Project documentation
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-*   **Docker Engine:** version 20.10.0+
-*   **Docker Compose:** version 2.0.0+
-*   **Linux/Unix environment** (Recommended)
-
-### 1. Configuration
-
-The project uses environment variables for sensitive data. Copy the example file and configure your credentials:
-
-```bash
-cp .env.example .env
-```
-
-**Important:** Ensure the `.env` file is never committed to version control (already handled in `.gitignore`).
-
-### 2. Deployment
-
-Build and launch the entire infrastructure in detached mode:
-
-```bash
-docker-compose up -d --build
-```
-
-This command will:
-1.  Build custom images for the Gateway, Inventory, and Billing services.
-2.  Pull stable Alpine/Debian-based images for PostgreSQL and RabbitMQ.
-3.  Setup the `backend-network`.
-4.  Initialize persistent volumes for databases and logs.
-
-### 3. Verification
-
-Check the status of the containers:
-
-```bash
-docker-compose ps
-```
-
-## 🛠 API Usage
-
-All requests must be sent to the **API Gateway** on port `3000`.
-
-### Inventory Management (`/api/movies`)
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/movies` | List all movies |
-| `POST` | `/api/movies` | Create a movie (JSON: title, description) |
-| `GET` | `/api/movies/<id>` | Get movie details |
-| `PUT` | `/api/movies/<id>` | Update a movie |
-| `DELETE` | `/api/movies/<id>` | Delete a specific movie |
-| `DELETE` | `/api/movies` | Wipe all movies |
-
-### Billing Management (`/api/billing`)
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/billing` | Submit order to queue (JSON: user_id, number_of_items, total_amount) |
-| `GET` | `/api/billing` | Fetch processed billing records |
-
-## 🔒 Security & Performance
-
-*   **Isolation:** Only the `api-gateway-app` maps ports to the host. Databases and brokers are invisible to external scans.
-*   **Persistence:** Data survives container restarts via named Docker volumes (`inventory-db-data`, `billing-db-data`).
-*   **Resilience:** Containers use `restart: always` to ensure high availability during crashes.
-*   **Logging:** API Gateway logs are persisted to a host-mounted volume for audit purposes.
-*   **Base Images:** Built on stable `alpine` variants to reduce attack surface and image size.
-
-## 🧪 Automated Testing
-
-A test script is provided to validate the Inventory CRUD cycle through the Gateway:
-
-```bash
-# Install dependencies
-pip install requests python-dotenv
-
-# Run tests
-python3 srcs/inventory-app/test_api.py
-```
-
-*Note: Ensure `API_GATEWAY_HOST=localhost` is set in your `.env` when running tests from the host machine.*
-
-## 📈 Troubleshooting
-
-**View Logs:**
-```bash
-docker-compose logs -f [service_name]
-```
-
-**Restart a specific service:**
-```bash
-docker-compose restart inventory-app
-```
-
-**Clean Slate (Warning: Deletes all data):**
-```bash
-docker-compose down -v
-```
+# 🚀 play-with-containers
 
 ---
-*Developed as part of the play-with-containers project.*
+
+## 📖 Overview
+
+This project introduces **containerization concepts** and provides hands-on experience by building a **microservices architecture** using Docker and Docker Compose.  
+
+You will deploy multiple services, connect them through networks and volumes, and ensure they run reliably in isolated containers. The project also emphasizes best practices for building Docker images and orchestrating multi-container applications.
+
+---
+
+# ⚙️ Instructions
+
+This project is a continuation of the project [CRUD-MASTER](https://github.com/ismailsayen/CRUD-Master), but this time we will use **Docker** instead of **Vagrant**.
+
+> ⚠️ Before starting, make sure you have Docker installed on your machine.
+
+---
+
+## 🏗️ Architecture
+
+You have to implement this architecture:
+
+![image](https://learn.zone01oujda.ma//api/content/root/01-edu_module/content/play-with-containers/resources/play-with-containers-py.png)
+
+---
+
+# 📦 Project Services
+
+**Play-with-containers** is a microservices project consisting of:
+
+- `api-gateway`
+- `billing-app`
+- `inventory-app`
+- `RabbitMQ`
+- `PostgreSQL databases`
+
+To ensure optimal container performance, each service, server, and database runs on its own dedicated image and container.
+
+---
+
+## 🗄️ Database Containers
+
+### 🐘 `inventory-db`
+
+| Property | Value |
+|----------|--------|
+| **Type** | PostgreSQL Database Server |
+| **Purpose** | Stores the inventory database |
+| **Port** | `5432` |
+
+---
+
+### 🐘 `billing-db`
+
+| Property | Value |
+|----------|--------|
+| **Type** | PostgreSQL Database Server |
+| **Purpose** | Stores the billing database |
+| **Port** | `5432` |
+
+---
+
+## 🖥️ Application Containers
+
+### 📦 `inventory-app`
+
+| Property | Value |
+|----------|--------|
+| **Type** | Backend Service |
+| **Connected To** | `inventory-db` |
+| **Accessible Port** | `8080` |
+
+---
+
+### 💳 `billing-app`
+
+| Property | Value |
+|----------|--------|
+| **Type** | Backend Service |
+| **Connected To** | `billing-db` |
+| **Consumes** | Messages from RabbitMQ queue |
+| **Accessible Port** | `8080` |
+
+---
+
+## 📨 Messaging Container
+
+### 🐇 `rabbit-queue`
+
+| Property | Value |
+|----------|--------|
+| **Type** | RabbitMQ Server |
+| **Purpose** | Handles message queueing between services |
+
+---
+
+## 🌐 API Gateway
+
+### 🚪 `api-gateway-app`
+
+| Property | Value |
+|----------|--------|
+| **Type** | API Gateway Server |
+| **Purpose** | Forwards requests to other services |
+| **Accessible Port** | `3000` |
+
+---
+
+---
+
+# 💾 Docker Volumes
+
+Docker volumes are used to persist data outside the lifecycle of containers.
+
+---
+
+## 🗄️ Database Volumes
+
+### 🐘 `inventory-db` Volume
+
+| Property | Value |
+|----------|--------|
+| **Purpose** | Stores the inventory database data |
+| **Persistence** | Keeps data even if the container is removed |
+
+---
+
+### 🐘 `billing-db` Volume
+
+| Property | Value |
+|----------|--------|
+| **Purpose** | Stores the billing database data |
+| **Persistence** | Keeps data even if the container is removed |
+
+---
+
+## 📜 Logging Volume
+
+### 🚪 `api-gateway-app` Volume
+
+| Property | Value |
+|----------|--------|
+| **Purpose** | Stores API gateway logs |
+| **Usage** | Helps with monitoring and debugging |
+
+---
+
+# 🌐 Docker Network
+
+You must create a dedicated **Docker network** that establishes communication between all services inside your Docker host.
+
+---
+
+## 🔗 Network Requirements
+
+| Requirement | Description |
+|-------------|-------------|
+| **Internal Communication** | All containers must communicate through the same Docker network |
+| **Isolation** | Services should only communicate internally unless explicitly exposed |
+| **External Access** | Only the `api-gateway-app` must be accessible from outside |
+| **Exposed Port** | `3000` |
+
+---
+
+## 🚨 Important Note
+
+> Any external request must be able to access **only** the `api-gateway-app` via port `3000`.
+
+All other services and databases must remain internal to the Docker network.
+
+---
+
+# 📚 Resources
+
+Here are some useful resources to better understand Docker, Docker Compose, networking, and volumes.
+
+---
+
+## 🐳 Docker Documentation
+
+| Resource | Link |
+|----------|------|
+| Docker Compose Documentation | https://dev.to/alexmercedcoder/a-deep-dive-into-docker-compose-27h5 |
+| Docker Networking | https://docs.docker.com/network/ |
+| Docker Volumes | https://docs.docker.com/storage/volumes/ |
+| Docker architecture  | https://agenda.infn.it/event/32136/sessions/23644/attachments/95750/131779/docker%20-%20architecture.pdf |
